@@ -1,6 +1,6 @@
 // import webserver and mysql driver
-//import { serve } from "https://deno.land/std@0.97.0/http/server.ts";
-const server = Deno.listen({ port: 8000 });
+import { serve } from "https://deno.land/std@0.97.0/http/server.ts";
+
 import { Client } from "https://deno.land/x/mysql/mod.ts";
 const db = await new Client().connect({
   hostname: "127.0.0.1",
@@ -39,13 +39,3 @@ const header=`<html lang='en'>
 <h2>${sitedescription}</h2>`;
 const footer=`<hr>Proudly served by DemoPress</body></html>`;
 
-for await (const conn of server) {
-  (async () => {
-    const httpConn = Deno.serveHttp(conn);
-    for await (const requestEvent of httpConn) {
-      const url = new URL(requestEvent.request.url);
-      await requestEvent.respondWith(new Response(header+url.path+footer));
-      console.log(`path: ${url.path}`);
-    }
-  })();
-}

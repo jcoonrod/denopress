@@ -1,1 +1,1 @@
-./../.deno/deno/bin/deno run --allow-net --allow-env denopress
+./../.deno/bin/deno run --allow-net --allow-env denopress.js

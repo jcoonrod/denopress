@@ -1,1 +1,1 @@
-./../.deno/bin/deno run --unstable --allow-net --allow-read --allow-env webserver.ts
+deno run --allow-net --allow-read --allow-env app.ts

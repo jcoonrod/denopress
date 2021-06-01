@@ -1,1 +1,1 @@
-deno run --allow-net --allow-read --allow-env app.ts
+~/.deno/bin/deno run --allow-net --allow-read --allow-env app.ts

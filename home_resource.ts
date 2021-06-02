@@ -25,8 +25,6 @@ var where ="where post_id=ID and post_type='nav_menu_item' and meta_key='_menu_i
 const menus = await db.query(select+where);
 var menutable="";
 var link="";
-var contents="";
-var post;
 for(i=0;i<menus.length;i++) {
   link=menus[i].meta_value;
   menutable += "<tr><td>"+menus[i].post_title+"</td><td><a href="+link+">"+link+"</a></td><td>"+menus[i].menu_order+"</td></tr>\n";
@@ -35,12 +33,20 @@ for(i=0;i<menus.length;i++) {
 export default class HomeResource extends Drash.Http.Resource {
   
   static paths = ["/:p?"];
- 
   public async GET() {
+    var post;
+    var contents;
+    var title:string;
+    var content:string;
     const param = this.request.getPathParam("p");
     if(param) {
-      post=await db.query("select post_content from wp_posts where ID="+param);
-      contents=post.post_content;
+      post=await db.query("select post_title,post_content from wp_posts where ID="+param);
+      contents=Object.values(post);
+      title=Object.values(contents[0])[0];
+      content=Object.values(contents[1])[0];
+
+      console.log(contents[0]);
+      console.log(contents[1]);
     }
    
     this.response.body = `<!DOCTYPE html>
@@ -58,7 +64,8 @@ export default class HomeResource extends Drash.Http.Resource {
           <p>Param: ${param}</p>
           <p>${select}${where} returned: ${menus.length}</p>
           <table border>${menutable}</table>
-          <p>${post.post_content}</p>
+          <hr><h1>${title}</h1>
+          <p>${content}</p>
         </body>
       </html>`;
  

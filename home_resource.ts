@@ -1,5 +1,5 @@
 import { Drash } from "https://deno.land/x/drash@v1.4.4/mod.ts";
-import { Client } from "https://deno.land/x/mysql/mod.ts";
+import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
 
 
 // pull in the basics of the wordpress site
@@ -20,14 +20,21 @@ for (i=0; i<options.length; i++) {
 }
 
 // pull in the menu items and links - an initially overly simple menu
-var select = "select post_title,meta_value,menu_order from wp_posts a,wp_postmeta b ";
-var where ="where post_id=ID and post_type='nav_menu_item' and meta_key='_menu_item_object_id'";
-const menus = await db.query(select+where);
-var menutable="";
-var link="";
+const query = `select a.ID as id,a.post_title as title,b.post_title as alt,c.meta_value as link,d.meta_value as parent,a.menu_order as ord
+ from wp_posts a, wp_posts b, wp_postmeta c, wp_postmeta d, wp_term_relationships e 
+ where a.ID=e.object_id and term_taxonomy_id=896 and c.post_id=a.ID and a.post_type='nav_menu_item' and c.meta_key='_menu_item_object_id' and b.ID=c.meta_value and d.post_id=a.ID and d.meta_key='_menu_item_menu_item_parent'
+ order by ord`;
+const menus = await db.query(query);
+console.log("pulled",menus.length);
+var menu=""; // the html
+// pull in everything we need for the menu
+
 for(i=0;i<menus.length;i++) {
-  link=menus[i].meta_value;
-  menutable += "<tr><td>"+menus[i].post_title+"</td><td><a href="+link+">"+link+"</a></td><td>"+menus[i].menu_order+"</td></tr>\n";
+  if(menus[i].parent==0 && i>1) menu+="</ul>\n";
+  menu+="<li><a href="+menus[i].link+">";  
+  if(menus[i].title) {menu+=menus[i].title} else {menu+=menus[i].alt}
+  menu+="</li>\n";
+  if(menus[i].parent==0) menu+="<ul>\n";
 }
 
 export default class HomeResource extends Drash.Http.Resource {
@@ -35,18 +42,13 @@ export default class HomeResource extends Drash.Http.Resource {
   static paths = ["/:p?"];
   public async GET() {
     var post;
-    var contents;
-    var title:string;
-    var content:string;
+    var contents=["Title","Body"];
     const param = this.request.getPathParam("p");
     if(param) {
       post=await db.query("select post_title,post_content from wp_posts where ID="+param);
-      contents=Object.values(post);
-      title=Object.values(contents[0])[0];
-      content=Object.values(contents[1])[0];
-
-      console.log(contents[0]);
-      console.log(contents[1]);
+      contents=Object.values(post[0]);
+      console.log(post);
+      console.log(contents);
     }
    
     this.response.body = `<!DOCTYPE html>
@@ -54,18 +56,18 @@ export default class HomeResource extends Drash.Http.Resource {
         <head>
             <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
             <title>DenoPress</title>
-            <link href="/static/style.css" rel="stylesheet">
+            <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
+
             <meta name="Description" content="Testing a Drash Server - John Coonrod.">
         	<meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
-        <body>
-          <h1>${sitename}</h1>
-          <h2>${sitedescription}</h2>
-          <p>Param: ${param}</p>
-          <p>${select}${where} returned: ${menus.length}</p>
-          <table border>${menutable}</table>
-          <hr><h1>${title}</h1>
-          <p>${content}</p>
+        <body><header class=site-header>
+          <div><h1>${sitename} ${sitedescription}</h1></div>
+          <nav><ul>${menu}</ul></nav>
+          </header><section class=site-content>
+          <hr><h1>${contents[0]}</h1>
+          <p>${contents[1]}</p>
+          </section>
         </body>
       </html>`;
  

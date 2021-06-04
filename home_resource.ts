@@ -54,16 +54,17 @@ export default class HomeResource extends Drash.Http.Resource {
     this.response.body = `<!DOCTYPE html>
       <html lang=en>
         <head>
-            <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
-            <title>DenoPress</title>
-            <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
-
-            <meta name="Description" content="Testing a Drash Server - John Coonrod.">
+          <meta charset="UTF-8">
+          <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
+          <title>DenoPress</title>
+          <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
+          <meta name="Description" content="Testing a Drash Server - John Coonrod.">
         	<meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body><header class=site-header>
           <div><h1>${sitename} ${sitedescription}</h1></div>
           <nav><ul>${menu}</ul></nav>
+          <h1 id=hamburger>☰&nbsp;</h1>
           </header><section class=site-content>
           <hr><h1>${contents[0]}</h1>
           <p>${contents[1]}</p>

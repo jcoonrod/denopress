@@ -21,37 +21,6 @@ blockquote {
     border-left: 5px solid;
     padding-left: 20px;
 }
-
-.wp-block-button .wp-block-button__link{
-	display: inline-block;
-	padding: 10px 20px;
-	border-radius:0;
-	text-transform:uppercase;
-	font-weight:bold;
-	border: 3px solid #0000aa;
-	background-color:white;
-	color:#0000aa;
-}
-.wp-block-button .wp-block-button__link:hover{
-	background-color:#0000aa;
-	color:white;
-}
-.btn1 {background-color:#0000aa !important; color:white !important;}
-.btn2 {
-	padding: 10px 20px;
-	border-radius:0;
-	text-transform:uppercase;
-	font-weight:bold;
-	font-size:20px;
-	font-family:sans-serif;
-	background-color:inherit;
-	color:white;
-	border: 3px solid white;
-}
-.btn2:hover {
-	background-color:white;
-	color:#0000aa;
-}
 	
 .countup {text-align:center;font-family:sans-serif; font-size:50px;}
 .fit {width:100%; max-width:100%; height:auto; object-fit:contain;}

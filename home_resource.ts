@@ -27,16 +27,17 @@ const menus = await db.query(query);
 console.log("pulled",menus.length);
 var menu=""; // the html
 var level=0; // how many levels are we in?
+var v="&#9660;";
 // pull in everything we need for the menu
 
 for(i=0;i<menus.length;i++) {
-  if(menus[i].parent==0 && i>1) { menu+="</ul>\n"; level=0;}
-  menu+="<li><a href="+menus[i].plink+">";  
+  if(menus[i].parent==0 && i>1) { menu+="</ul></li>\n"; level=0;}
+  menu+="<li><a href=/"+menus[i].plink+">";  
   if(menus[i].title) {menu+=menus[i].title} else {menu+=menus[i].alt}
-  menu+="</a></li>\n";
-  if(menus[i].parent==0) { menu+="<ul class='dropdown'>\n"; level=1;}
+  menu+="</a>\n";
+  if(menus[i].parent==0) { menu+="<ul class='dropdown'>\n"; level=1;} else {menu+="</li>\n";}
 }
-if(level==1) menu+="</ul>\n";
+if(level==1) menu+="</ul></li>\n";
 
 export default class HomeResource extends Drash.Http.Resource {
   
@@ -44,6 +45,7 @@ export default class HomeResource extends Drash.Http.Resource {
   public async GET() {
     var post;
     var contents=["Title","Body"];
+    var content=""; // page content;
     var feature='';
     const param = this.request.getPathParam("p");
     if(param) {
@@ -53,10 +55,11 @@ export default class HomeResource extends Drash.Http.Resource {
       where a.post_name="${param}" and a.post_type='page'`;
       post=await db.query(query);
       contents=Object.values(post[0]);
+      content=contents[1];
+      content=content.replaceAll("https://mcld.org","");
+      content=content.replaceAll("http://localhost:8080","");
       feature=contents[2].replace('localhost:8080','localhost:8000');
       if(feature) feature='<img class=fit src='+feature+">\n";
-      console.log(post);
-      console.log(contents);
     }
    
     this.response.body = `<!DOCTYPE html>

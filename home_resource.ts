@@ -11,16 +11,15 @@ const db = await new Client().connect({
   password: Deno.env.get('WPP'),
 });
 let sitename='Drash';
-let sitedescription='Nothing yet';
 const options = await db.query("select * from wp_options");
 let i=0;
 for (i=0; i<options.length; i++) {
     if(options[i].option_name=="blogname") sitename=options[i].option_value;
-    if(options[i].option_name=="blogdescription") sitedescription=options[i].option_value;
+//    if(options[i].option_name=="blogdescription") sitedescription=options[i].option_value;
 }
 
 // pull in the menu items and links - an initially overly simple menu
-const query = `select a.ID as id,a.post_title as title,b.post_title as alt,c.meta_value as link,d.meta_value as parent,a.menu_order as ord
+const query = `select a.ID as id,a.post_title as title,b.post_title as alt, b.post_name as plink, c.meta_value as link,d.meta_value as parent,a.menu_order as ord
  from wp_posts a, wp_posts b, wp_postmeta c, wp_postmeta d, wp_term_relationships e 
  where a.ID=e.object_id and term_taxonomy_id=895 and c.post_id=a.ID and a.post_type='nav_menu_item' and c.meta_key='_menu_item_object_id' and b.ID=c.meta_value and d.post_id=a.ID and d.meta_key='_menu_item_menu_item_parent'
  order by ord`;
@@ -32,7 +31,7 @@ var level=0; // how many levels are we in?
 
 for(i=0;i<menus.length;i++) {
   if(menus[i].parent==0 && i>1) { menu+="</ul>\n"; level=0;}
-  menu+="<li><a href="+menus[i].link+">";  
+  menu+="<li><a href="+menus[i].plink+">";  
   if(menus[i].title) {menu+=menus[i].title} else {menu+=menus[i].alt}
   menu+="</a></li>\n";
   if(menus[i].parent==0) { menu+="<ul class='dropdown'>\n"; level=1;}
@@ -51,7 +50,7 @@ export default class HomeResource extends Drash.Http.Resource {
       const query=`select a.post_title,a.post_content,c.guid
       from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
       right outer join wp_posts c on c.ID=b.meta_value
-      where a.ID=${param}`;
+      where a.post_name="${param}" and a.post_type='page'`;
       post=await db.query(query);
       contents=Object.values(post[0]);
       feature=contents[2].replace('localhost:8080','localhost:8000');
@@ -71,13 +70,13 @@ export default class HomeResource extends Drash.Http.Resource {
         	<meta name="viewport" content="width=device-width, initial-scale=1">
         </head>
         <body><header class=site-header>
-          <div><h1>${sitename} ${sitedescription}</h1></div>
-          <nav role="navigation">
+          <div><h1>${sitename}</h1></div>
+          <nav id="menu-primary" role="navigation">
           <ul>
           ${menu}
           </ul>
           </nav>
-          <h1 id=hamburger>☰&nbsp;</h1>
+          <h1 id=hamburger onclick="javascript:document.getElementById('menu-primary').style.display='block'";>☰&nbsp;</h1>
           </header><section class=site-content>
           <hr><h1>${contents[0]}</h1>
           ${feature}

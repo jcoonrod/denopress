@@ -27,7 +27,7 @@ const menus = await db.query(query);
 console.log("pulled",menus.length);
 var menu=""; // the html
 var level=0; // how many levels are we in?
-var v="&#9660;";
+// var v="&#9660;";
 // pull in everything we need for the menu
 
 for(i=0;i<menus.length;i++) {

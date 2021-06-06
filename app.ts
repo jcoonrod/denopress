@@ -6,7 +6,7 @@ const server = new Drash.Http.Server({
   directory: "/home/johncoonrod/denopress",
   resources: [HomeResource],
   response_output: "text/html",
-  static_paths: ["/static"]
+  static_paths: ["/static","/wp-content"]
 });
  
 server.run({

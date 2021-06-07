@@ -11,12 +11,19 @@ const db = await new Client().connect({
   password: Deno.env.get('WPP'),
 });
 let sitename='Drash';
+let postsPerPage=0;
+let pageForPosts=0;
+var key:string;
 const options = await db.query("select * from wp_options");
 let i=0;
 for (i=0; i<options.length; i++) {
-    if(options[i].option_name=="blogname") sitename=options[i].option_value;
-//    if(options[i].option_name=="blogdescription") sitedescription=options[i].option_value;
+  key=options[i].option_name;
+  if(key=='blogname') sitename=options[i].option_value;
+  else if(key=='posts_per_page') postsPerPage=options[i].option_value;
+  else if(key=='page_for_posts') pageForPosts=options[i].option_value;
 }
+
+console.log(postsPerPage,pageForPosts);
 
 // pull in the menu items and links - an initially overly simple menu
 const query = `select a.ID as id,a.post_title as title,b.post_title as alt, b.post_name as plink, c.meta_value as link,d.meta_value as parent,a.menu_order as ord
@@ -41,17 +48,27 @@ if(level==1) menu+="</ul></li>\n";
 
 export default class HomeResource extends Drash.Http.Resource {
   
-  static paths = ["/:p?"];
+  static paths = ["/:p?/:q?"];
   public async GET() {
     var post;
     var contents=["Title","Body"];
     var content=""; // page content;
     var feature='';
     const param = this.request.getPathParam("p");
+    const param2 = this.request.getPathParam("q");
+    console.log(param,param2)
+
+    const select=`select a.post_title,a.post_content,c.guid
+    from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
+    right outer join wp_posts c on c.ID=b.meta_value`
+// determine how to route it
+    if(!param) param=pageForPosts;
+    if(isNaN(param)) { 
+      if(param=='category')}
+       
+
     if(param) {
-      const query=`select a.post_title,a.post_content,c.guid
-      from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
-      right outer join wp_posts c on c.ID=b.meta_value
+      const query=
       where a.post_name="${param}" and a.post_type='page'`;
       post=await db.query(query);
       contents=Object.values(post[0]);
@@ -68,6 +85,7 @@ export default class HomeResource extends Drash.Http.Resource {
           <meta charset="UTF-8">
           <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
           <title>DenoPress</title>
+          <link rel='stylesheet' id='wp-block-library-css'  href='https://149360489.v2.pressablecdn.com/wp-includes/css/dist/block-library/style.min.css?ver=5.7.2' type='text/css' media='all' />
           <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
           <meta name="Description" content="Testing a Drash Server - John Coonrod.">
         	<meta name="viewport" content="width=device-width, initial-scale=1">

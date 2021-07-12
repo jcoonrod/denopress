@@ -74,7 +74,7 @@ export default class HomeResource extends Drash.Http.Resource {
     const param2 = this.request.getPathParam("q");
     console.log(param,param2)
 
-// We have three options for routing;
+// ROUTINE: We have three options for routing;
 // With null path we list the categories as links
 // With category we list the 10 recent posts
 // With anything else, we treat it as a singe post_name
@@ -126,7 +126,7 @@ if(!param) {
           <meta charset="UTF-8">
           <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
           <title>DenoPress</title>
-          <link rel='stylesheet' id='wp-block-library-css'  href='https://149360489.v2.pressablecdn.com/wp-includes/css/dist/block-library/style.min.css?ver=5.7.2' type='text/css' media='all' />
+          <link rel='stylesheet' href='/static/block-library.css' type='text/css' media='all' />
           <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
           <meta name="Description" content="Testing a Drash Server - John Coonrod.">
         	<meta name="viewport" content="width=device-width, initial-scale=1">

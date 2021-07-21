@@ -74,9 +74,10 @@ export default class HomeResource extends Drash.Http.Resource {
     const param2 = this.request.getPathParam("q");
     console.log(param,param2)
 
-// ROUTINE: We have three options for routing;
+// ROUTINE: We have gpit options for routing;
 // With null path we list the categories as links
 // With category we list the 10 recent posts
+// With admin we fire up tinymce
 // With anything else, we treat it as a singe post_name
 // The second two pull in the same information
 
@@ -108,6 +109,10 @@ if(!param) {
   }
   feature='';
   contents[1]=content+"</div>\n";
+}else if(param=='admin') {
+  feature="<p>Nothing to see here</p>\n";
+  contents[0]="Create a new post";
+  contents[1]="(Editor will appear here!)";
 }else{
   // this is the one that displays a single page
     query=postquery+` where a.post_name="${param}"`;

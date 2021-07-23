@@ -1,6 +1,63 @@
 import { Drash } from "https://deno.land/x/drash@v1.4.4/mod.ts";
 import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
 
+// Standard header for all normal pages
+
+var head=`<!DOCTYPE html>
+<html lang=en>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
+    <title>DenoPress</title>
+    <link rel='stylesheet' href='/static/block-library.css' type='text/css' media='all' />
+    <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
+    <meta name="Description" content="DenoPress - John Coonrod.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+  `;
+
+let menu="";
+// pull in the menu items and links
+let query = `select a.ID as id,a.post_title as title,b.post_title as alt, b.post_name as plink, c.meta_value as link,d.meta_value as parent,a.menu_order as ord
+ from wp_posts a, wp_posts b, wp_postmeta c, wp_postmeta d, wp_term_relationships e 
+ where a.ID=e.object_id and term_taxonomy_id=895 and c.post_id=a.ID and a.post_type='nav_menu_item' and c.meta_key='_menu_item_object_id' and b.ID=c.meta_value and d.post_id=a.ID and d.meta_key='_menu_item_menu_item_parent' 
+ order by ord`
+const menus = await db.query(query);
+console.log("menu size",menus.length);
+let content="";
+
+// Functions for the four kinds of outputs
+// Home page simply lists the categories as links
+function output_home(){
+  query="select name, slug from wp_terms a, wp_term_taxonomy b where a.term_id=b.term_id and taxonomy='category' order by 1";
+  const posts=await db.query(query);
+"";
+  for(i=0;i<posts.length;i++) {
+    const post=Object.values(posts[i]);
+    content+="<p><a href=/category/"+post[1]+">"+post[0]+"</a></p>\n";
+  }
+  return head+`<header class=site-header>
+  <div><a href=/><h1>${sitename}</h1></a></div>
+  <nav id="menu-primary" role="navigation"><ul>${menu}</ul></nav>
+  <h1 id=hamburger onclick="javascript:document.getElementById('menu-primary').style.display='block'";>☰&nbsp;</h1>
+  </header>
+  <section class=site-content><hr><h1>Click on a category of posts</h1><p>${content}</p>
+  </section></body></html>`;
+}
+
+function output_category(){
+
+}
+
+function output_post(){
+
+}
+
+function output_edit(){
+
+}
+
 // Function to strip tags out of post content when listing latest posts
 function removeTags(str:string) {
   if ((str===null) || (str===''))
@@ -11,14 +68,8 @@ function removeTags(str:string) {
 }
 
 // pull in the basics of the wordpress site
-
-const db = await new Client().connect({
-  hostname: "127.0.0.1",
-    username: Deno.env.get('WPU'),
-    db: "wordpress",
-  password: Deno.env.get('WPP'),
-});
-let sitename='Drash';
+const db = await new Client().connect({hostname: "127.0.0.1",username: Deno.env.get('WPU'),
+    db: "wordpress",password: Deno.env.get('WPP'),});
 let postsPerPage=0;
 let pageForPosts=0;
 var key:string;
@@ -31,16 +82,6 @@ for (i=0; i<options.length; i++) {
   else if(key=='page_for_posts') pageForPosts=options[i].option_value;
 }
 
-console.log(postsPerPage,pageForPosts);
-
-// pull in the menu items and links
-const query = `select a.ID as id,a.post_title as title,b.post_title as alt, b.post_name as plink, c.meta_value as link,d.meta_value as parent,a.menu_order as ord
- from wp_posts a, wp_posts b, wp_postmeta c, wp_postmeta d, wp_term_relationships e 
- where a.ID=e.object_id and term_taxonomy_id=895 and c.post_id=a.ID and a.post_type='nav_menu_item' and c.meta_key='_menu_item_object_id' and b.ID=c.meta_value and d.post_id=a.ID and d.meta_key='_menu_item_menu_item_parent' 
- order by ord`
-const menus = await db.query(query);
-console.log("pulled",menus.length);
-var menu=""; // the html
 var level=0; // how many levels are we in?
 // var v="&#9660;";
 // pull in everything we need for the menu
@@ -61,8 +102,6 @@ export default class HomeResource extends Drash.Http.Resource {
     var posts; // array of objects from query
     var post:string[]; // a single array of strings of the posts array of objects
     var content="";
-    var contents=["Title","Body"];
-    var feature='';
     var query="";
 
     // the first bit of the queries for one post or list of posts
@@ -74,23 +113,11 @@ export default class HomeResource extends Drash.Http.Resource {
     const param2 = this.request.getPathParam("q");
     console.log(param,param2)
 
-// ROUTINE: We have gpit options for routing;
-// With null path we list the categories as links
-// With category we list the 10 recent posts
-// With admin we fire up tinymce
-// With anything else, we treat it as a singe post_name
-// The second two pull in the same information
+// ROUTING: We have gpit options for routing;
 
 // First option - listing of all categories as links
 if(!param) {
-  query="select name, slug from wp_terms a, wp_term_taxonomy b where a.term_id=b.term_id and taxonomy='category' order by 1";
-  posts=await db.query(query);
-  contents[0]="Click on a category of posts";
-  for(i=0;i<posts.length;i++) {
-    post=Object.values(posts[i]);
-    content+="<p><a href=/category/"+post[1]+">"+post[0]+"</a></p>\n";
-  }
-  contents[1]=content;
+  output_home();
 }else if (param=="category"){
   // Second option - list up to 10 recent posts in that category
   query=postquery+` join wp_term_relationships e on a.ID=e.object_id 
@@ -109,10 +136,9 @@ if(!param) {
   }
   feature='';
   contents[1]=content+"</div>\n";
+  this.response.body = 
 }else if(param=='admin') {
-  feature="<p>Nothing to see here</p>\n";
-  contents[0]="Create a new post";
-  contents[1]="(Editor will appear here!)";
+  this.response.body = admin;
 }else{
   // this is the one that displays a single page
     query=postquery+` where a.post_name="${param}"`;
@@ -124,33 +150,8 @@ if(!param) {
     feature=post[2].replace('localhost:8080','localhost:8000');
     if(feature) feature='<img class=fit src='+feature+">\n";
     contents=[post[0],content]
+    this.response.body = template;
   } 
-    this.response.body = `<!DOCTYPE html>
-      <html lang=en>
-        <head>
-          <meta charset="UTF-8">
-          <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
-          <title>DenoPress</title>
-          <link rel='stylesheet' href='/static/block-library.css' type='text/css' media='all' />
-          <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
-          <meta name="Description" content="Testing a Drash Server - John Coonrod.">
-        	<meta name="viewport" content="width=device-width, initial-scale=1">
-        </head>
-        <body><header class=site-header>
-          <div><a href=/><h1>${sitename}</h1></a></div>
-          <nav id="menu-primary" role="navigation">
-          <ul>
-          ${menu}
-          </ul>
-          </nav>
-          <h1 id=hamburger onclick="javascript:document.getElementById('menu-primary').style.display='block'";>☰&nbsp;</h1>
-          </header><section class=site-content>
-          <hr><h1>${contents[0]}</h1>
-          ${feature}
-          <p>${contents[1]}</p>
-          </section>
-        </body>
-      </html>`;
  
     return this.response;
   }

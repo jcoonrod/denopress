@@ -52,8 +52,8 @@ let content="";
     </header>
     <section class=site-content><hr><h1>Click on a category of posts</h1><p>${content}</p>
     </section></body></html>`;
-}
 
+/*
 // Function to strip tags out of post content when listing latest posts
 function removeTags(str:string) {
   if ((str===null) || (str===''))
@@ -62,7 +62,7 @@ function removeTags(str:string) {
   str = str.toString();
   return str.replace( /(<([^>]+)>)/ig, '');
 }
-
+*/
 
 
 export default class HomeResource extends Drash.Http.Resource {

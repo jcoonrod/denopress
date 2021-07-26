@@ -1,4 +1,4 @@
-// Complete refactoring for Medium article Part 3
+// Complete refactoring for Medium article Part 3 based on DenoServer instead of Drash
 import {template} from "./template.ts"; 
 async function handle(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);

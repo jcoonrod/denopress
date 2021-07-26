@@ -2,7 +2,7 @@
 import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
 import {template} from "./template.ts"; 
 var content=""; // the heart of each page
-
+var post:FormData;
 
 // connect to the database
 const db = await new Client().connect({hostname: "127.0.0.1",username: Deno.env.get('WPU'),
@@ -42,6 +42,7 @@ async function makeMenu() {
 }
 
 // Get the sitename (and eventually also the site logo)
+// Note - I'm sure this can be made shorter!
 async function basics() {
   const options = await db.query("select * from wp_options");
   let site="DenoPress"; // default responose
@@ -79,14 +80,38 @@ async function category(param2:string){
     const post=Object.values(posts[i]);
     const feature=String(post[2]).replace('localhost:8080','localhost:8000');
     const pdate=post[4];
-    if(feature) s+='<img src='+feature+" height=150 width=auto align=left>\n";
-    s+="<div>"+feature+"<h3><a href=/"+post[3]+">"+post[0]+"</a> - "+pdate+"</h3>\n"; // name, title, dat
+    s+=`<div>`;
+    if(feature) s+=`<img src=${feature} height=150 width=auto align=left>`;
+    s+=`<h3><a href=/${post[3]}>${post[0]}</a> - ${pdate}</h3>
+    `; // name, title, dat
     if(post[5]) {s+=`<p>${post[5]}</p>`;}
     else {s+="<p>"+removeTags(String(post[1])).substring(0,200)+"</p>"}
   }
   return s+"</div>\n";
 }
-function edit(){ return "edit";}
+async function edit(param2:string){
+  const query=`select a.id, a.post_title,a.post_content from wp_posts a where a.post_name="${param2}"`;
+  const posts=await db.query(query);
+  const post=Object.values(posts[0]);
+  console.log(post);
+  const s=`
+  <script src='https://cdn.tiny.cloud/1/ryfpoyk6399p52296uee8on618wsda0sa5erai7ciotj5cl6/tinymce/5/tinymce.min.js' referrerpolicy="origin"></script>
+  <script>
+  tinymce.init({
+    selector: '#mytextarea'
+  });
+  </script>
+  <form method=post action=/save/${post[0]}>
+  <h1>Title: <input name=mytitle value="${post[1]}"></h1> 
+  <textarea id=mytextarea>${post[2]}</textarea>
+  <input type=submit>
+  </form>`;
+  return s;
+}
+
+function save(param2:string,fd:FormData){
+  return param2+" "+JSON.stringify(fd);
+}
 
 async function page(param:string){
   let s="";
@@ -94,15 +119,15 @@ async function page(param:string){
   const query=`select a.post_title,a.post_content,c.guid, a.post_name, a.post_date,a.post_excerpt
   from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
   right outer join wp_posts c on c.ID=b.meta_value where a.post_name="${param}"`;
-  console.log(query);
   const posts=await db.query(query);
   if(posts.length) {
     const post=Object.values(posts[0]);
-    s=String(post[1]);
+    const feature=String(post[2]).replace('localhost:8080','localhost:8000');
+    s=`<h1>${post[0]} <a href=/edit/${param}>&#9998;</a></h1>`; // Post title
+    if(feature) s+=`<img class=fit src=${feature} alt="Featured Image">`;
+    s+=String(post[1]);
     s=s.replaceAll("https://mcld.org","");
     s=s.replaceAll("http://localhost:8080","");
-    const feature=String(post[2]).replace('localhost:8080','localhost:8000');
-    if(feature) s+='<img class=fit src='+feature+">\n";
   }
   return s;
 }
@@ -110,12 +135,14 @@ async function page(param:string){
 async function handle(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
   for await (const requestEvent of httpConn) {
+    const method=requestEvent.request.method;
+    if(method=='POST') {post=await requestEvent.request.formData(); console.log(JSON.stringify(post));}
     const url = new URL(requestEvent.request.url);
     const p=url.pathname;
     const mime=String(mimetypes[p.substr(p.lastIndexOf('.')+1)]);
-    console.log(`path: ${p}`);
+    console.log(`${method} ${p}`);
     // do we serve a file or generate a dynamic page?
-    if(p=='/favicon.ico' || p=='/robots.txt' || p.substr(0,7)=='/static') {
+    if(p=='/favicon.ico' || p=='/robots.txt' || p.substr(0,7)=='/static' || p.substr(0,11)=='/wp-content') {
       try {
         await Deno.stat("."+p);
         const buf=await Deno.readFile("."+p);
@@ -132,7 +159,9 @@ async function handle(conn: Deno.Conn) {
       }else if (p.substr(0,9)=='/category') {
         content=await category(p.substr(10)); // pass everything beyond category as param2
       }else if (p.substr(0,5)=='/edit') {
-        content=edit();
+        content=await edit(p.substr(6));
+      }else if (p.substr(0,5)=='/save') {
+        content=save(p.substr(6),post);
       }else {
         content=await page(p.substr(1));
       }

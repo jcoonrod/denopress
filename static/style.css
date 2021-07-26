@@ -17,6 +17,8 @@ body {
 	margin: 0 auto;
 }
 
+table {width:100%;}
+
 p, li {font-size: 20px;line-height: 1.6;}
 a { text-decoration: none; }
 h1, h2, blockquote {font-weight: normal; color: #0000aa;}
@@ -75,11 +77,10 @@ nav ul {padding-inline-start:0;}
     top: 2em;
 	border-top: 2px solid #0000aa;
 	padding-top: 1em;
-	width: 150px;
+	width: 250px;
     list-style-type:none;
     left: 0;
     z-index: 99999;
-    width: 150px;
     background: #fff;
     box-shadow: 0px 3px 3px rgba(0,0,0,0.2);
 }

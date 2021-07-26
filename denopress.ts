@@ -9,10 +9,14 @@ async function handle(conn: Deno.Conn) {
     console.log(`path: ${p}`);
     // do we serve a file or generate a dynamic page?
     if(p=='/favicon.ico' || p=='/robots.txt' || p.substr(0,7)=='/static') {
-      const buf=await Deno.readFile("."+p);
-      await requestEvent.respondWith(
-        new Response(buf,{status:200, headers:{"Content-type":mime}})
-      );
+      try {
+        await Deno.stat("."+p);
+        const buf=await Deno.readFile("."+p);
+        await requestEvent.respondWith(
+          new Response(buf,{status:200, headers:{"Content-type":mime}});
+      } catch(error) {
+        await requestEvent.respondWith({status:404});
+      }
     }else{
       const hello=template(p);
       await requestEvent.respondWith(

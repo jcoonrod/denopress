@@ -9,7 +9,7 @@ export function template(site: string, menu: string, content: string){
         <meta name="description" content="Re-creating WordPress in JavaScript and Deno.">
     </head>
     <body>
-        <h1>${site}!</h1>
+        <a href=/><h1>${site}</h1></a>
         <nav id="menu-primary" role="navigation"><ul>${menu}</ul></nav>
         ${content}
     </body>

@@ -3,14 +3,24 @@ import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
 import {template} from "./template.ts"; 
 var content=""; // the heart of each page
 
-// I cannot figure out how to pass the database as a parameter
-// so I'll put the functions here to deal with them as a global
 
 // connect to the database
 const db = await new Client().connect({hostname: "127.0.0.1",username: Deno.env.get('WPU'),
     db: "wordpress",password: Deno.env.get('WPP'),});
 const sitename= await basics();
 const menu = await makeMenu();
+
+// I cannot figure out how to pass the database as a parameter
+// so for now I'll put the functions here to deal with them as a global
+
+// Function to strip tags out of post content when listing latest posts
+function removeTags(str:string) {
+  if ((str===null) || (str===''))
+  return '';
+  else
+  str = str.toString();
+  return str.replace( /(<([^>]+)>)/ig, '');
+}
 
 async function makeMenu() {
   const query = `select a.ID as id,a.post_title as title,b.post_title as alt, b.post_name as plink, c.meta_value as link,d.meta_value as parent,a.menu_order as ord
@@ -31,6 +41,7 @@ async function makeMenu() {
   return s;
 }
 
+// Get the sitename (and eventually also the site logo)
 async function basics() {
   const options = await db.query("select * from wp_options");
   let site="DenoPress"; // default responose
@@ -40,15 +51,61 @@ async function basics() {
     key=options[i].option_name;
     if(key=='blogname') site=options[i].option_value;
   }
-  console.log(site)
   return site;
 }
-console.log(sitename);
 
-function home(){ return "home";}
-function category(){ return "category";}
+// format a simple home page based on links to all the categories
+async function home(){
+  let s="<h1>Click on a category below to see posts.</h1>\n"; // string to build the html
+  const query="select name, slug from wp_terms a, wp_term_taxonomy b where a.term_id=b.term_id and taxonomy='category' order by 1";
+  const posts=await db.query(query);
+  for(let i=0;i<posts.length;i++) {
+    const post=Object.values(posts[i]);
+    s+="<p><a href=/category/"+post[1]+">"+post[0]+"</a></p>\n";
+  }
+  return s;
+}
+
+async function category(param2:string){ 
+  let s=`<h1>Recent Posts in Category ${param2}</h1>
+  `;
+  const query=`select a.post_title,a.post_content,c.guid, a.post_name, a.post_date,a.post_excerpt
+  from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
+  right outer join wp_posts c on c.ID=b.meta_value
+  join wp_term_relationships e on a.ID=e.object_id
+  join wp_terms f on e.term_taxonomy_id=f.term_id and f.name='${param2}' order by 3 desc limit 10`;
+  const posts=await db.query(query);
+  for(let i=0;i<posts.length;i++) {
+    const post=Object.values(posts[i]);
+    const feature=String(post[2]).replace('localhost:8080','localhost:8000');
+    const pdate=post[4];
+    if(feature) s+='<img src='+feature+" height=150 width=auto align=left>\n";
+    s+="<div>"+feature+"<h3><a href=/"+post[3]+">"+post[0]+"</a> - "+pdate+"</h3>\n"; // name, title, dat
+    if(post[5]) {s+=`<p>${post[5]}</p>`;}
+    else {s+="<p>"+removeTags(String(post[1])).substring(0,200)+"</p>"}
+  }
+  return s+"</div>\n";
+}
 function edit(){ return "edit";}
-function page(){ return "page";}
+
+async function page(param:string){
+  let s="";
+  // this is the one that displays a single page
+  const query=`select a.post_title,a.post_content,c.guid, a.post_name, a.post_date,a.post_excerpt
+  from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
+  right outer join wp_posts c on c.ID=b.meta_value where a.post_name="${param}"`;
+  console.log(query);
+  const posts=await db.query(query);
+  if(posts.length) {
+    const post=Object.values(posts[0]);
+    s=String(post[1]);
+    s=s.replaceAll("https://mcld.org","");
+    s=s.replaceAll("http://localhost:8080","");
+    const feature=String(post[2]).replace('localhost:8080','localhost:8000');
+    if(feature) s+='<img class=fit src='+feature+">\n";
+  }
+  return s;
+}
 
 async function handle(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
@@ -69,14 +126,15 @@ async function handle(conn: Deno.Conn) {
           new Response(page404, {status: 404, headers:{"Content-type":"text/html"}})
         );}
     }else{
+      // OK! Here is the main router for four types of pages
       if(p=='/') {
-        content=home();
+        content=await home();
       }else if (p.substr(0,9)=='/category') {
-        content=category();
+        content=await category(p.substr(10)); // pass everything beyond category as param2
       }else if (p.substr(0,5)=='/edit') {
         content=edit();
       }else {
-        content=page();
+        content=await page(p.substr(1));
       }
       const hello=template(sitename, menu, content);
       await requestEvent.respondWith(

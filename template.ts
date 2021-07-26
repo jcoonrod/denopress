@@ -10,7 +10,7 @@ export function template(site: string, menu: string, content: string){
     </head>
     <body>
         <h1>${site}!</h1>
-        ${menu}
+        <nav id="menu-primary" role="navigation"><ul>${menu}</ul></nav>
         ${content}
     </body>
 </html>`;

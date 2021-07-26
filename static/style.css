@@ -21,6 +21,8 @@ body {
 	color: #000;
 	background: #fff;
 	font-family: sans-serif;
+	max-width: 1000px;
+	margin: 0 auto;
 }
 
 p, li {
@@ -105,8 +107,7 @@ nav li { position: relative; }
 nav li:hover > ul.dropdown {display: block;}
 
 .site-content {
-	max-width: 1000px;
-	margin: 0 auto;
+	
 }
 
 .site-footer {

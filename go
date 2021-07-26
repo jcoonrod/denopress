@@ -1,1 +1,1 @@
-~/.deno/bin/deno run --allow-net --allow-read --allow-env denopress.ts
+~/.deno/bin/deno run --allow-net --allow-read --allow-env --unstable denopress.ts

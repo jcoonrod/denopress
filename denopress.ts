@@ -13,10 +13,11 @@ async function handle(conn: Deno.Conn) {
         await Deno.stat("."+p);
         const buf=await Deno.readFile("."+p);
         await requestEvent.respondWith(
-          new Response(buf,{status:200, headers:{"Content-type":mime}});
-      } catch(error) {
-        await requestEvent.respondWith({status:404});
-      }
+          new Response(buf,{status:200, headers:{"Content-type":mime}}));
+      } catch(_error) {
+        await requestEvent.respondWith(
+          new Response(page404, {status: 404, headers:{"Content-type":"text/html"}})
+        );}
     }else{
       const hello=template(p);
       await requestEvent.respondWith(
@@ -26,5 +27,6 @@ async function handle(conn: Deno.Conn) {
   }
 }
 const mimetypes: Record<string,string>={'svg':'image/svg+xml','jpg':'image/jpeg','png':'image/png','txt':'text/plain','css':'text/css','jpeg':'image/jpeg'};
+const page404='<html><body><h1>Object not found</h1></body></html>';
 const server = Deno.listen({ port: 8080 });
 for await (const conn of server) {handle(conn);}

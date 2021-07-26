@@ -1,3 +1,4 @@
+/*
 import { Drash } from "https://deno.land/x/drash@v1.5.0/mod.ts";
 import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
 // pages has all the functions for formatting the outputs
@@ -62,8 +63,6 @@ function removeTags(str:string) {
   str = str.toString();
   return str.replace( /(<([^>]+)>)/ig, '');
 }
-*/
-
 
 export default class HomeResource extends Drash.Http.Resource {
   
@@ -98,3 +97,5 @@ if(!param) {
   } 
   }
 }
+
+*/

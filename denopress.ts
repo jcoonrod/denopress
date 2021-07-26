@@ -28,5 +28,5 @@ async function handle(conn: Deno.Conn) {
 }
 const mimetypes: Record<string,string>={'svg':'image/svg+xml','jpg':'image/jpeg','png':'image/png','txt':'text/plain','css':'text/css','jpeg':'image/jpeg'};
 const page404='<html><body><h1>Object not found</h1></body></html>';
-const server = Deno.listen({ port: 8080 });
+const server = Deno.listen({ port: 8000 });
 for await (const conn of server) {handle(conn);}

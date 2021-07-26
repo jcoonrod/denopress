@@ -1,29 +1,12 @@
-// these are the basic routines for formatting each page type
 
-// Standard header for all normal pages
-function head() {
-
-return `<!DOCTYPE html>
-<html lang=en>
-  <head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/svg" href="/static/favicon.svg"/>
-    <title>DenoPress</title>
-    <link rel='stylesheet' href='/static/block-library.css' type='text/css' media='all' />
-    <link rel='stylesheet' href='/static/style.css' type='text/css' media='all' />
-    <meta name="Description" content="DenoPress - John Coonrod.">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-  <body>
-  `;
-}
-
-async function home() {
+/*
+export async function home(db) {
     return await "here is the home page!";
 }
 
-async function category() {
-/*  // Second option - list up to 10 recent posts in that category
+export async function category(db,p) {
+  const param2=p.substr(11); // second parameter of path
+  // Second option - list up to 10 recent posts in that category
   query=postquery+` join wp_term_relationships e on a.ID=e.object_id 
   join wp_terms f on e.term_taxonomy_id=f.term_id and f.name='${param2}' order by 3 desc limit 10`
   posts=await db.query(query);
@@ -40,14 +23,12 @@ async function category() {
   }
   feature='';
   contents[1]=content+"</div>\n";
-  this.response.body = 
-*/
     return await "here are all the pages in a category";
 }
-async function edit() {
-    return "here is the editor";
+export async function edit(db,p) {
+    return await  "here is the editor";
 }
-async function page() {
+export async function page(db,p) {
 /*
   // this is the one that displays a single page
     query=postquery+` where a.post_name="${param}"`;
@@ -60,8 +41,8 @@ async function page() {
     if(feature) feature='<img class=fit src='+feature+">\n";
     contents=[post[0],content]
 
-*/
 
 
     return await "here is the specified page";
 }
+*/

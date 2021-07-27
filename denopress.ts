@@ -136,7 +136,10 @@ async function handle(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
   for await (const requestEvent of httpConn) {
     const method=requestEvent.request.method;
-    if(method=='POST') {post=await requestEvent.request.formData(); console.log(JSON.stringify(post));}
+    if(method=='POST') {
+      post=await requestEvent.request.formData(); 
+      console.log("With POST "+JSON.stringify(post));
+    }
     const url = new URL(requestEvent.request.url);
     const p=url.pathname;
     const mime=String(mimetypes[p.substr(p.lastIndexOf('.')+1)]);

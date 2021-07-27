@@ -103,14 +103,14 @@ async function edit(param2:string){
   </script>
   <form method=post action=/save/${post[0]}>
   <h1>Title: <input name=mytitle value="${post[1]}"></h1> 
-  <textarea id=mytextarea>${post[2]}</textarea>
+  <textarea id=mytextarea name=mytextarea>${post[2]}</textarea>
   <input type=submit>
   </form>`;
   return s;
 }
 
 function save(param2:string,fd:FormData){
-  return param2+" "+JSON.stringify(fd);
+  return `<h1>${fd.get('mytitle')}</h1>${fd.get('mytextarea')}<p>${param2}</p>`;
 }
 
 async function page(param:string){
@@ -138,7 +138,7 @@ async function handle(conn: Deno.Conn) {
     const method=requestEvent.request.method;
     if(method=='POST') {
       post=await requestEvent.request.formData(); 
-      console.log("With POST "+JSON.stringify(post));
+      console.log("With POST "+post.get('mytitle'));
     }
     const url = new URL(requestEvent.request.url);
     const p=url.pathname;

@@ -116,13 +116,14 @@ function save(param2:string,fd:FormData){
 async function page(param:string){
   let s="";
   // this is the one that displays a single page
-  const query=`select a.post_title,a.post_content,c.guid, a.post_name, a.post_date,a.post_excerpt
+  const query=`select a.post_title,a.post_content,c.guid, a.post_name, a.post_date,a.post_excerpt,a.id
   from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
   right outer join wp_posts c on c.ID=b.meta_value where a.post_name="${param}"`;
   const posts=await db.query(query);
   if(posts.length) {
     const post=Object.values(posts[0]);
-    const feature=String(post[2]).replace('localhost:8080','localhost:8000');
+    console.log(`Page ${post[6]} ${param}`); 
+    const feature=new URL(String(post[2])).pathname;
     s=`<h1>${post[0]} <a href=/edit/${param}>&#9998;</a></h1>`; // Post title
     if(feature) s+=`<img class=fit src=${feature} alt="Featured Image">`;
     s+=String(post[1]);

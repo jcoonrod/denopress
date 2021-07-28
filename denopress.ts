@@ -14,6 +14,12 @@ const menu = await makeMenu();
 // so for now I'll put the functions here to deal with them as a global
 
 // Function to strip tags out of post content when listing latest posts
+
+function sanitizeString(str:string){
+  str = str.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
+  return str.trim();
+}
+
 function removeTags(str:string) {
   if ((str===null) || (str===''))
   return '';
@@ -90,10 +96,14 @@ async function category(param2:string){
   return s+"</div>\n";
 }
 async function edit(param2:string){
-  const query=`select a.id, a.post_title,a.post_content from wp_posts a where a.post_name="${param2}"`;
-  const posts=await db.query(query);
-  const post=Object.values(posts[0]);
-  console.log(post);
+  let action="/insert";
+  let post=['','',''];
+  if(param2.length){
+    const query=`select a.id, a.post_title,a.post_content from wp_posts a where a.post_name="${param2}"`;
+    const posts=await db.query(query);
+    post=Object.values(posts[0]);
+    action=`/save/${post[0]}`;
+  }
   const s=`
   <script src='https://cdn.tiny.cloud/1/ryfpoyk6399p52296uee8on618wsda0sa5erai7ciotj5cl6/tinymce/5/tinymce.min.js' referrerpolicy="origin"></script>
   <script>
@@ -101,7 +111,7 @@ async function edit(param2:string){
     selector: '#mytextarea'
   });
   </script>
-  <form method=post action=/save/${post[0]}>
+  <form method=post action=${action}>
   <h1>Title: <input name=mytitle value="${post[1]}"></h1> 
   <textarea id=mytextarea name=mytextarea>${post[2]}</textarea>
   <input type=submit>
@@ -112,20 +122,29 @@ async function edit(param2:string){
 function save(param2:string,fd:FormData){
   return `<h1>${fd.get('mytitle')}</h1>${fd.get('mytextarea')}<p>${param2}</p>`;
 }
-
+async function insert(fd:FormData){
+  const title=sanitizeString(String(fd.get('mytitle')));
+  const pname=String(title).replace(' ','-').toLowerCase();
+  const body=sanitizeString(String(fd.get('mytextarea')));
+  const query=`insert into wp_posts (post_title,post_name,post_excerpt,post_content_filtered,pinged,to_ping,post_content)`;
+  const values=` values ("${title}","${pname}",'','','','',"${body}")`;
+  const result=await db.execute(query+values);
+  return `Inserted ${pname} as id ${result.lastInsertId}`;
+}
+// BUG: won't display page without a featured image
 async function page(param:string){
   let s="";
   // this is the one that displays a single page
-  const query=`select a.post_title,a.post_content,c.guid, a.post_name, a.post_date,a.post_excerpt,a.id
-  from wp_posts a right outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id' 
-  right outer join wp_posts c on c.ID=b.meta_value where a.post_name="${param}"`;
+  const query=`select a.post_title,a.post_content,a.ID, a.post_name, a.post_date,b.meta_value
+  from wp_posts a outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id'
+  where a.post_name="${param}"`;
   const posts=await db.query(query);
   if(posts.length) {
     const post=Object.values(posts[0]);
-    console.log(`Page ${post[6]} ${param}`); 
-    const feature=new URL(String(post[2])).pathname;
+    console.log(`Page ${post[2]} ${param}`);
+//    const feature=new URL(String(post[2])).pathname;
     s=`<h1>${post[0]} <a href=/edit/${param}>&#9998;</a></h1>`; // Post title
-    if(feature) s+=`<img class=fit src=${feature} alt="Featured Image">`;
+//    if(feature) s+=`<img class=fit src=${feature} alt="Featured Image">`;
     s+=String(post[1]);
     s=s.replaceAll("https://mcld.org","");
     s=s.replaceAll("http://localhost:8080","");
@@ -166,6 +185,8 @@ async function handle(conn: Deno.Conn) {
         content=await edit(p.substr(6));
       }else if (p.substr(0,5)=='/save') {
         content=save(p.substr(6),post);
+      }else if (p.substr(0,7)=='/insert') {
+        content=await insert(post);
       }else {
         content=await page(p.substr(1));
       }

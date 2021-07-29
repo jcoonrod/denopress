@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-control-regex
 // Complete refactoring for Medium article Part 3 based on DenoServer instead of Drash
 import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
 import {template} from "./template.ts"; 
@@ -15,11 +16,33 @@ const menu = await makeMenu();
 
 // Function to strip tags out of post content when listing latest posts
 
-function sanitizeString(str:string){
-  str = str.replace(/[^a-z0-9áéíóúñü \.,_-]/gim,"");
-  return str.trim();
+// The mysql package shoulr really include this - I'll ping them about it
+function sanitize(str:string) {
+  return str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, function (char) {
+      switch (char) {
+          case "\0":
+              return "\\0";
+          case "\x08":
+              return "\\b";
+          case "\x09":
+              return "\\t";
+          case "\x1a":
+              return "\\z";
+          case "\n":
+              return "\\n";
+          case "\r":
+              return "\\r";
+          case "\"":
+          case "'":
+          case "\\":
+          case "%":
+              return "\\"+char; // prepends a backslash to backslash, percent,
+                                // and double/single quotes
+          default:
+              return char;
+      }
+  });
 }
-
 function removeTags(str:string) {
   if ((str===null) || (str===''))
   return '';
@@ -119,14 +142,20 @@ async function edit(param2:string){
   return s;
 }
 
-function save(param2:string,fd:FormData){
-  return `<h1>${fd.get('mytitle')}</h1>${fd.get('mytextarea')}<p>${param2}</p>`;
+async function save(param2:string,fd:FormData){
+  const title=sanitize(String(fd.get('mytitle')));
+  const pname=String(title).replace(' ','-').toLowerCase();
+  const body=sanitize(String(fd.get('mytextarea')));
+  const query=`update wp_posts set post_title="${title}", post_name="${pname}",post_content="${body}" where ID=${param2}`;
+  const _result=await db.execute(query);
+  return `Updated <a href=/${pname}>${pname}</a>`;
+
 }
 async function insert(fd:FormData){
-  const title=sanitizeString(String(fd.get('mytitle')));
+  const title=sanitize(String(fd.get('mytitle')));
   const pname=String(title).replace(' ','-').toLowerCase();
-  const body=sanitizeString(String(fd.get('mytextarea')));
-  const query=`insert into wp_posts set post_title=?,post_name=?,post_excerpt='',post_content_filtered='',pinged='',to_ping='',post_content)`;
+  const body=sanitize(String(fd.get('mytextarea')));
+  const query=`insert into wp_posts (post_title,post_name,post_excerpt,post_content_filtered,pinged,to_ping,post_content)`;
   const values=` values ("${title}","${pname}",'','','','',"${body}")`;
   const result=await db.execute(query+values);
   return `Inserted ${pname} as id ${result.lastInsertId}`;
@@ -190,7 +219,7 @@ async function handle(conn: Deno.Conn) {
       }else if (p.substr(0,5)=='/edit') {
         content=await edit(p.substr(6));
       }else if (p.substr(0,5)=='/save') {
-        content=save(p.substr(6),post);
+        content=await save(p.substr(6),post);
       }else if (p.substr(0,7)=='/insert') {
         content=await insert(post);
       }else {

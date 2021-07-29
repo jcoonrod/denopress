@@ -135,16 +135,22 @@ async function insert(fd:FormData){
 async function page(param:string){
   let s="";
   // this is the one that displays a single page
-  const query=`select a.post_title,a.post_content,a.ID, a.post_name, a.post_date,b.meta_value
-  from wp_posts a outer join wp_postmeta b on a.ID=b.post_id and b.meta_key='_thumbnail_id'
-  where a.post_name="${param}"`;
+  const query=`select post_title,post_content,ID, post_name, post_date
+  from wp_posts where post_name="${param}"`;
   const posts=await db.query(query);
   if(posts.length) {
     const post=Object.values(posts[0]);
-    console.log(`Page ${post[2]} ${param}`);
-//    const feature=new URL(String(post[2])).pathname;
+    const id=post[2];
+    console.log(`Page ${id} ${param}`);
     s=`<h1>${post[0]} <a href=/edit/${param}>&#9998;</a></h1>`; // Post title
-//    if(feature) s+=`<img class=fit src=${feature} alt="Featured Image">`;
+    // second query for the featured image
+    const fquery=`select c.guid from wp_postmeta b, wp_posts c 
+    where b.post_id=${id} and b.meta_key='_thumbnail_id' and c.ID=b.meta_value`;
+    const f=await db.query(fquery);
+    if(f.length) {
+      const feature=new URL(String(f[0].guid)).pathname;
+      s+=`<img src="${feature}" class=fit alt="Featured image">`;
+    }
     s+=String(post[1]);
     s=s.replaceAll("https://mcld.org","");
     s=s.replaceAll("http://localhost:8080","");

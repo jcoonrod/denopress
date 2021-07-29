@@ -126,7 +126,7 @@ async function insert(fd:FormData){
   const title=sanitizeString(String(fd.get('mytitle')));
   const pname=String(title).replace(' ','-').toLowerCase();
   const body=sanitizeString(String(fd.get('mytextarea')));
-  const query=`insert into wp_posts (post_title,post_name,post_excerpt,post_content_filtered,pinged,to_ping,post_content)`;
+  const query=`insert into wp_posts set post_title=?,post_name=?,post_excerpt='',post_content_filtered='',pinged='',to_ping='',post_content)`;
   const values=` values ("${title}","${pname}",'','','','',"${body}")`;
   const result=await db.execute(query+values);
   return `Inserted ${pname} as id ${result.lastInsertId}`;

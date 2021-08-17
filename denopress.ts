@@ -6,8 +6,8 @@ var content=""; // the heart of each page
 var post:FormData;
 
 // connect to the database
-const db = await new Client().connect({hostname: "127.0.0.1",username: Deno.env.get('WPU'),
-    db: "wordpress",password: Deno.env.get('WPP'),});
+const db = await new Client().connect({hostname: Deno.env.get('WPH'),username: Deno.env.get('WPU'),
+    db: Deno.env.get('WPD'),password: Deno.env.get('WPP'),});
 const sitename= await basics();
 const menu = await makeMenu();
 

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-control-regex
 // Complete refactoring for Medium article Part 3 based on DenoServer instead of Drash
-import { Client } from "https://deno.land/x/mysql@v2.9.0/mod.ts";
+import { Client } from "https://deno.land/x/mysql@v2.10..0/mod.ts";
 import {template} from "./template.ts"; 
 var content=""; // the heart of each page
 var post:FormData;

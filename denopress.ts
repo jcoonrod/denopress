@@ -2,6 +2,7 @@
 // Complete refactoring for Medium article Part 3 based on DenoServer instead of Drash
 import { Client } from "https://deno.land/x/mysql@v2.10.0/mod.ts";
 import {template} from "./template.ts"; 
+//const content_prefix=Deno.env.get('WPC'); // url prefix to wp-contents
 var content=""; // the heart of each page
 var post:FormData;
 
@@ -107,7 +108,7 @@ async function category(param2:string){
   const posts=await db.query(query);
   for(let i=0;i<posts.length;i++) {
     const post=Object.values(posts[i]);
-    const feature=String(post[2]).replace('localhost:8080','localhost:8000');
+    const feature=String(post[2]).replace('localhost:8080','mcld.org');
     const pdate=post[4];
     s+=`<div>`;
     if(feature) s+=`<img src=${feature} height=150 width=auto align=left>`;

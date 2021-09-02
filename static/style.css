@@ -19,6 +19,23 @@ body {
 
 table {overflow-x:auto; width:100%; max-width:1000px;}
 
+.container {
+	height: 100%;
+	display: grid;
+	place-items: center;
+  }
+  .loginform {
+	background-color:lightblue;
+	padding: 2rem;
+	border-radius: 2rem;
+  }
+  input {
+	line-height:20px;
+	padding:5px;
+	border-radius: 7px;
+  }
+  
+
 p, li {font-size: 20px;line-height: 1.6;}
 a { text-decoration: none; }
 h1, h2, blockquote {font-weight: normal; color: #0000aa;}

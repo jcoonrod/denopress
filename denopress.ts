@@ -12,12 +12,10 @@ const db = await new Client().connect({hostname: Deno.env.get('WPH'),username: D
 const sitename= await basics();
 const menu = await makeMenu();
 
-// I cannot figure out how to pass the database as a parameter
-// so for now I'll put the functions here to deal with them as a global
 
 // Function to strip tags out of post content when listing latest posts
 
-// The mysql package shoulr really include this - I'll ping them about it
+// The mysql package should really include this - I'll ping them about it
 function sanitize(str:string) {
   return str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, function (char) {
       switch (char) {
@@ -119,7 +117,23 @@ async function category(param2:string){
   }
   return s+"</div>\n";
 }
+
+function login(){
+return `<html>
+<body>
+<main class=container>
+<form class=loginform method=post>
+<p><input name=user placeholder="User name"></p>
+<p><input name=pwd type=password placeholder="Password"></p>
+<p><input type=submit value=Login></p>
+</form>
+</main>
+</body>
+</html>`;
+}
+
 async function edit(param2:string){
+  login();
   let action="/insert";
   let post=['','',''];
   if(param2.length){
